@@ -5,19 +5,22 @@ import pucflix.entity.Show;
 import pucflix.model.EpisodeFile;
 import pucflix.model.ShowFile;
 import java.time.LocalDate;
+import pucflix.aeds3.ListaInvertida;
 
 public class EpisodeView extends View 
 {
     private EpisodeFile eFile; 
     private ShowFile sFile;
     private int showID;
+    private ListaInvertida pList;
 
-    public EpisodeView(Prompt prompt, EpisodeFile eFile, ShowFile sFile) throws Exception
+    public EpisodeView(Prompt prompt, EpisodeFile eFile, ShowFile sFile, ListaInvertida pList) throws Exception
     {
         super(prompt);
         showID = -1;
         this.eFile = eFile;
         this.sFile = sFile;
+        this.pList = pList;
     }
 
     @Override
@@ -69,8 +72,9 @@ public class EpisodeView extends View
         return
             "1) Incluir\n" +
             "2) Buscar\n" +
-            "3) Alterar\n" +
-            "4) Excluir";
+            "3) Buscar(lista invertida)\n" +
+            "4) Alterar\n" +
+            "5) Excluir";
     }
 
     @Override
@@ -131,7 +135,42 @@ public class EpisodeView extends View
                 
                 break;
             }
-            case 3: 
+            // Testar lista invertida
+            case 3: { // Buscar (lista invertida)
+                String search = prompt.askForInput("Nome: ");
+                ListaInvertida[] episodes = pList.read(search);
+                
+                if (actors == null || episodes.length == 0) {
+                    System.out.println("Nenhum episodio encontrado.");
+                    break;
+                }
+
+                if (episodes.length == 1) {
+                    System.out.println(episodes[0]);
+                    break;
+                }
+
+                for (int i = 0; i < episodes.length; i++)
+                    System.out.println((i + 1) + ") " + episodes[i].getName());
+
+                int n = 0;
+                boolean valid = false;
+
+                while (!valid) {
+                    try {
+                        n = Integer.parseInt(prompt.askForInput("Número: "));
+                        if (n < 1 || n > episodes.length)
+                            throw new Exception();
+                        valid = true;
+                    } catch (Exception e) {
+                        System.out.println("Insira um número válido.");
+                    }
+                }
+
+                System.out.println(episodes[n - 1]);
+                break;
+            }
+            case 4: 
             {
                 String search = prompt.askForInput("Nome: ");
 
@@ -192,7 +231,7 @@ public class EpisodeView extends View
                 eFile.update(episode);
                 break;
             }
-            case 4:
+            case 5:
             {
                 String search = prompt.askForInput("Nome: ");
 
