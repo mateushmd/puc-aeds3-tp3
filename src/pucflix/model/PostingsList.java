@@ -122,5 +122,7 @@ public class PostingsList extends ListaInvertida
                     (float)terms[i].occurrence / (strs.length - stops)
             ));
         }
+
+        incrementaEntidades();
     }
 }
