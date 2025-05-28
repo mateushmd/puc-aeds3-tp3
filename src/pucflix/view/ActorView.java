@@ -4,15 +4,18 @@ import pucflix.entity.Actor;
 import pucflix.entity.Show;
 import pucflix.model.ActorFile;
 import pucflix.model.ShowFile;
+import pucflix.aeds3.ListaInvertida;
 
 public class ActorView extends View {
     private ActorFile aFile;
     private ShowFile sFile;
+    private ListaInvertida pList;
 
-    public ActorView(Prompt prompt, ActorFile aFile, ShowFile sFile) throws Exception {
+    public ActorView(Prompt prompt, ActorFile aFile, ShowFile sFile, ListaInvertida pList) throws Exception {
         super(prompt);
         this.aFile = aFile;
         this.sFile = sFile;
+        this.pList = pList;
     }
 
     @Override
@@ -24,11 +27,12 @@ public class ActorView extends View {
     public String getPrompt(int depth) throws Exception {
         return "1) Incluir\n" +
                 "2) Buscar\n" +
-                "3) Alterar\n" +
-                "4) Excluir\n" +
-                "5) Adicionar série\n" +
-                "6) Remover série\n" +
-                "7) Listar séries\n";
+                "3) Buscar(lista invertida)\n" +
+                "4) Alterar\n" +
+                "5) Excluir\n" +
+                "6) Adicionar série\n" +
+                "7) Remover série\n" +
+                "8) Listar séries\n";
     }
 
     @Override
@@ -75,7 +79,42 @@ public class ActorView extends View {
                 System.out.println(actors[n - 1]);
                 break;
             }
-            case 3: { // Alterar
+            // Testar lista invertida
+            case 3: { // Buscar (lista invertida)
+                String search = prompt.askForInput("Nome: ");
+                ListaInvertida[] actors = pList.read(search);
+                
+                if (actors == null || actors.length == 0) {
+                    System.out.println("Nenhum ator encontrado.");
+                    break;
+                }
+
+                if (actors.length == 1) {
+                    System.out.println(actors[0]);
+                    break;
+                }
+
+                for (int i = 0; i < actors.length; i++)
+                    System.out.println((i + 1) + ") " + actors[i].getName());
+
+                int n = 0;
+                boolean valid = false;
+
+                while (!valid) {
+                    try {
+                        n = Integer.parseInt(prompt.askForInput("Número: "));
+                        if (n < 1 || n > actors.length)
+                            throw new Exception();
+                        valid = true;
+                    } catch (Exception e) {
+                        System.out.println("Insira um número válido.");
+                    }
+                }
+
+                System.out.println(actors[n - 1]);
+                break;
+            }
+            case 4: { // Alterar
                 String search = prompt.askForInput("Nome: ");
                 Actor[] actors = aFile.readByName(search);
                 int n = 0;
@@ -113,7 +152,7 @@ public class ActorView extends View {
                 System.out.println("Ator atualizado com sucesso.");
                 break;
             }
-            case 4: { // Excluir
+            case 5: { // Excluir
                 String search = prompt.askForInput("Nome: ");
                 Actor[] actors = aFile.readByName(search);
                 int n = 0;
@@ -155,7 +194,7 @@ public class ActorView extends View {
 
                 break;
             }
-            case 5: { // Adicionar série ao ator
+            case 6: { // Adicionar série ao ator
                 String name = prompt.askForInput("Nome do ator: ");
                 Actor[] actors = aFile.readByName(name);
                 int n = 0;
@@ -222,7 +261,7 @@ public class ActorView extends View {
 
                 break;
             }
-            case 6: { // Remover série
+            case 7: { // Remover série
                 String name = prompt.askForInput("Nome do ator: ");
                 Actor[] actors = aFile.readByName(name);
                 int n = 0;
@@ -289,7 +328,7 @@ public class ActorView extends View {
 
                 break;
             }
-            case 7: { // Listar séries de um ator
+            case 8: { // Listar séries de um ator
                 String name = prompt.askForInput("Nome do ator: ");
                 Actor[] actors = aFile.readByName(name);
                 int n = 0;

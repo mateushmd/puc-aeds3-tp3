@@ -6,17 +6,20 @@ import pucflix.entity.Episode;
 import pucflix.model.ShowFile;
 import pucflix.model.ActorFile;
 import pucflix.model.EpisodeFile;
+import pucflix.aeds3.ListaInvertida;
 
 public class ShowView extends View {
     private ShowFile file;
     private EpisodeFile eFile;
     private ActorFile aFile;
+    private ListaInvertida pList;
 
-    public ShowView(Prompt prompt, ShowFile file, EpisodeFile eFile, ActorFile aFile) throws Exception {
+    public ShowView(Prompt prompt, ShowFile file, EpisodeFile eFile, ActorFile aFile, ListaInvertida pList) throws Exception {
         super(prompt);
         this.file = file;
         this.eFile = eFile;
         this.aFile = aFile;
+        this.pList = pList;
     }
 
     @Override
@@ -28,12 +31,13 @@ public class ShowView extends View {
     public String getPrompt(int depth) throws Exception {
         return "1) Incluir\n" +
                 "2) Buscar\n" +
-                "3) Alterar\n" +
-                "4) Excluir\n" +
-                "5) Listar episódios\n" +
-                "6) Adicionar ator\n" +
-                "7) Remover ator\n" +
-                "8) Listar atores";
+                "3) Buscar(lista invertida)\n" +
+                "4) Alterar\n" +
+                "5) Excluir\n" +
+                "6) Listar episódios\n" +
+                "7) Adicionar ator\n" +
+                "8) Remover ator\n" +
+                "9) Listar atores";
     }
 
     @Override
@@ -89,7 +93,42 @@ public class ShowView extends View {
 
                 break;
             }
-            case 3: {
+            // Testar lista invertida
+            case 3: { // Buscar (lista invertida)
+                String search = prompt.askForInput("Nome: ");
+                ListaInvertida[] shows = pList.read(search);
+                
+                if (shows == null || shows.length == 0) {
+                    System.out.println("Nenhuma serie encontrada.");
+                    break;
+                }
+
+                if (shows.length == 1) {
+                    System.out.println(shows[0]);
+                    break;
+                }
+
+                for (int i = 0; i < shows.length; i++)
+                    System.out.println((i + 1) + ") " + shows[i].getName());
+
+                int n = 0;
+                boolean valid = false;
+
+                while (!valid) {
+                    try {
+                        n = Integer.parseInt(prompt.askForInput("Número: "));
+                        if (n < 1 || n > shows.length)
+                            throw new Exception();
+                        valid = true;
+                    } catch (Exception e) {
+                        System.out.println("Insira um número válido.");
+                    }
+                }
+
+                System.out.println(shows[n - 1]);
+                break;
+            }
+            case 4: {
                 String search = prompt.askForInput("Nome: ");
 
                 Show[] shows = file.read(search);
@@ -141,7 +180,7 @@ public class ShowView extends View {
                 System.out.println("Operação finalizada com sucesso");
                 break;
             }
-            case 4: {
+            case 5: {
                 String search = prompt.askForInput("Nome: ");
 
                 Show[] shows = file.read(search);
@@ -201,7 +240,7 @@ public class ShowView extends View {
                     System.out.println("Operação finalizada com sucesso");
                 break;
             }
-            case 5: {
+            case 6: {
                 String search = prompt.askForInput("Nome: ");
 
                 Show[] shows = file.read(search);
@@ -257,7 +296,7 @@ public class ShowView extends View {
 
                 break;
             }
-            case 6: {
+            case 7: {
                 String showName = prompt.askForInput("Nome da série: ");
                 Show[] shows = file.read(showName);
                 int n = 0;
@@ -323,7 +362,7 @@ public class ShowView extends View {
 
                 break;
             }
-            case 7: {
+            case 8: {
                 String showName = prompt.askForInput("Nome da série: ");
                 Show[] shows = file.read(showName);
                 int n = 0;
@@ -385,7 +424,7 @@ public class ShowView extends View {
 
                 break;
             }
-            case 8: {
+            case 9: {
                 String showName = prompt.askForInput("Nome da série: ");
                 Show[] shows = file.read(showName);
                 int n = 0;
