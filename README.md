@@ -73,7 +73,7 @@ Classe da camada de visão do ator, implementação concreta da `View`. Realiza 
 
 ## Experiência
 
-O desafio desta etapa foi implementar o relacionamento N:N, o que não se mostrou particularmente difícil, já que, com base na experiência prévia com a árvore B+ e relacionamentos 1:N, já tínhamos uma ideia de como proceder. Tivemos, no entanto, certa dificuldade inicial para compreender a ordem correta dos identificadores no par id-id, tanto do lado do ator quanto da série, uma vez que essa ordem afeta diretamente o comportamento da árvore. Após compreendermos como deveria ser implementado, conseguimos completar com relativa facilidade, apenas redobrando a atenção para atender às restrições mais rigorosas de remoção, tanto do lado dos atores quanto do lado das séries.
+A implementação da lista invertida foi fácil e rápida. Procuramos fazer uma implementação genérica que pudesse ser facilmente integrada com qualquer entidade a partir da criação de uma extensão da implementação da ListaInvertida que fizesse todo o processamento necessário para inserção/remoção de entidades e busca. Gostaríamos de dar destaque à busca pelas stopwords e ordenação dos resultados de buscas de acordo com o cálculo $IDF \cdot freq$, processos que demandaram um pouco mais do nosso tempo.
 
 - [x] O índice invertido com os termos dos títulos das séries foi criado usando a classe ListaInvertida? `SIM`
 - [x] O índice invertido com os termos dos títulos dos episódios foi criado usando a classe ListaInvertida? `SIM`
