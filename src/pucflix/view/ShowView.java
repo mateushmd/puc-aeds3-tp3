@@ -6,15 +6,16 @@ import pucflix.entity.Episode;
 import pucflix.model.ShowFile;
 import pucflix.model.ActorFile;
 import pucflix.model.EpisodeFile;
+import pucflix.model.PostingsList;
 import pucflix.aeds3.ListaInvertida;
 
 public class ShowView extends View {
     private ShowFile file;
     private EpisodeFile eFile;
     private ActorFile aFile;
-    private ListaInvertida pList;
+    private PostingsList pList;
 
-    public ShowView(Prompt prompt, ShowFile file, EpisodeFile eFile, ActorFile aFile, ListaInvertida pList) throws Exception {
+    public ShowView(Prompt prompt, ShowFile file, EpisodeFile eFile, ActorFile aFile, PostingsList pList) throws Exception {
         super(prompt);
         this.file = file;
         this.eFile = eFile;
@@ -30,8 +31,8 @@ public class ShowView extends View {
     @Override
     public String getPrompt(int depth) throws Exception {
         return "1) Incluir\n" +
-                "2) Buscar\n" +
-                "3) Buscar(lista invertida)\n" +
+                "2) Listar\n" +
+                "3) Buscar\n" +
                 "4) Alterar\n" +
                 "5) Excluir\n" +
                 "6) Listar episódios\n" +
@@ -49,7 +50,8 @@ public class ShowView extends View {
                 String sinopsys = prompt.askForInput("Sinopse: ");
                 String streaming = prompt.askForInput("Serviço de streaming: ");
                 Show show = new Show(name, releaseYear, sinopsys, streaming);
-                file.create(show);
+                int id = file.create(show);
+                pList.add(name, id);
                 System.out.println("Operação finalizada com sucesso");
                 break;
             }
@@ -94,33 +96,35 @@ public class ShowView extends View {
                 break;
             }
             // Testar lista invertida
-            case 3: { // Buscar (lista invertida)
+            case 3: { 
                 String search = prompt.askForInput("Nome: ");
-                ListaInvertida[] shows = pList.read(search);
-                
-                if (shows == null || shows.length == 0) {
-                    System.out.println("Nenhuma serie encontrada.");
+
+                int[] ids = pList.search(search);
+
+                if (ids.length == 0) {
+                    System.out.println("Nenhuma série encontrada");
                     break;
                 }
 
-                if (shows.length == 1) {
-                    System.out.println(shows[0]);
-                    break;
-                }
+                Show[] shows = new Show[ids.length];
 
-                for (int i = 0; i < shows.length; i++)
-                    System.out.println((i + 1) + ") " + shows[i].getName());
+                for (int i = 0; i < ids.length; i++) {
+                    shows[i] = file.read(ids[i]);
+                    System.out.println((i + 1) + " - " + shows[i].getName());
+                }
 
                 int n = 0;
                 boolean valid = false;
 
                 while (!valid) {
                     try {
-                        n = Integer.parseInt(prompt.askForInput("Número: "));
-                        if (n < 1 || n > shows.length)
+                        int select = Integer.parseInt(prompt.askForInput("Número: "));
+                        if (select < 1 || select > shows.length + 1)
                             throw new Exception();
+
+                        n = select;
                         valid = true;
-                    } catch (Exception e) {
+                    } catch (Exception ex) {
                         System.out.println("Insira um número válido.");
                     }
                 }
@@ -159,6 +163,7 @@ public class ShowView extends View {
 
                 Show show = shows[n];
 
+                String oldName = show.getName();
                 String name = prompt.askForInput("Nome (vazio para não alterar): ");
                 if (!name.isEmpty())
                     show.setName(name);
@@ -176,6 +181,8 @@ public class ShowView extends View {
                     show.setStreamingService(streaming);
 
                 file.update(show);
+                pList.delete(oldName, show.getID());
+                pList.add(name, show.getID());
 
                 System.out.println("Operação finalizada com sucesso");
                 break;
@@ -238,6 +245,8 @@ public class ShowView extends View {
                     System.out.println("Operação falhou");
                 else
                     System.out.println("Operação finalizada com sucesso");
+
+                pList.delete(shows[n].getName(), id);
                 break;
             }
             case 6: {

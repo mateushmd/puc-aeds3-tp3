@@ -45,6 +45,10 @@ Clase da camada de modelo para atores. Contém os métodos CRUD tanto para o pr�
 
 Par nome-id genérico, utilizada em uma árvore B+ para busca de registros pelo nome.
 
+`PostingsList`
+
+Extensão da classe ListaInvertida, com métodos de normalização para remover letras maiúculas e acentos, verificar se um termo é uma stopword, e inserção/remoção/busca completa fornecendo a string completa da entidade ou busca. No caso da busca, faz o cálculo do IDF * frequência por entidade e ordena o resultado.
+
 ### Visão
 
 `Prompt`
@@ -71,17 +75,15 @@ Classe da camada de visão do ator, implementação concreta da `View`. Realiza 
 
 O desafio desta etapa foi implementar o relacionamento N:N, o que não se mostrou particularmente difícil, já que, com base na experiência prévia com a árvore B+ e relacionamentos 1:N, já tínhamos uma ideia de como proceder. Tivemos, no entanto, certa dificuldade inicial para compreender a ordem correta dos identificadores no par id-id, tanto do lado do ator quanto da série, uma vez que essa ordem afeta diretamente o comportamento da árvore. Após compreendermos como deveria ser implementado, conseguimos completar com relativa facilidade, apenas redobrando a atenção para atender às restrições mais rigorosas de remoção, tanto do lado dos atores quanto do lado das séries.
 
-- [X] As operações de inclusão, busca, alteração e exclusão de atores estão implementadas e funcionando corretamente? `SIM`
-- [X] O relacionamento entre séries e atores foi implementado com árvores B+ e funciona corretamente, assegurando a consistência entre as duas entidades? `SIM`
-- [X] É possível consultar quais são os atores de uma série? `SIM`
-- [X] É posssível consultar quais são as séries de um ator? `SIM`
-- [X] A remoção de séries remove os seus vínculos de atores? `SIM`
-- [X] A inclusão de um ator em uma série em um episódio se limita aos atores existentes? `SIM`
-- [X] A remoção de um ator checa se há alguma série vinculado a ele? `SIM`
-- [X] O trabalho está funcionando corretamente? `SIM`
-- [X] O trabalho está completo? `SIM`
-- [X] O trabalho é original e não a cópia de um trabalho de outro grupo? `SIM`
-
+- [x] O índice invertido com os termos dos títulos das séries foi criado usando a classe ListaInvertida? `SIM`
+- [x] O índice invertido com os termos dos títulos dos episódios foi criado usando a classe ListaInvertida? `SIM`
+- [x] O índice invertido com os termos dos nomes dos atores foi criado usando a classe ListaInvertida? `SIM`
+- [x] É possível buscar séries por palavras usando o índice invertido? `SIM`
+- [x] É possível buscar episódios por palavras usando o índice invertido? `SIM`
+- [x] É possível buscar atores por palavras usando o índice invertido? `SIM`
+- [x] O trabalho está completo? `SIM`
+- [x] O trabalho é original e não a cópia de um trabalho de um colega? `SIM`
+    
 ## Compilação e execução
 Para compilar e executar o programa, utilize o script correspondente ao seu sistema operacional:
 - *Linux*: `build.sh`

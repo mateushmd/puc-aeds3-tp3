@@ -4,6 +4,7 @@ import pucflix.entity.Episode;
 import pucflix.entity.Show;
 import pucflix.model.EpisodeFile;
 import pucflix.model.ShowFile;
+import pucflix.model.PostingsList;
 import java.time.LocalDate;
 import pucflix.aeds3.ListaInvertida;
 
@@ -12,9 +13,9 @@ public class EpisodeView extends View
     private EpisodeFile eFile; 
     private ShowFile sFile;
     private int showID;
-    private ListaInvertida pList;
+    private PostingsList pList;
 
-    public EpisodeView(Prompt prompt, EpisodeFile eFile, ShowFile sFile, ListaInvertida pList) throws Exception
+    public EpisodeView(Prompt prompt, EpisodeFile eFile, ShowFile sFile, PostingsList pList) throws Exception
     {
         super(prompt);
         showID = -1;
@@ -71,8 +72,8 @@ public class EpisodeView extends View
 
         return
             "1) Incluir\n" +
-            "2) Buscar\n" +
-            "3) Buscar(lista invertida)\n" +
+            "2) Ler\n" +
+            "3) Buscar\n" +
             "4) Alterar\n" +
             "5) Excluir";
     }
@@ -92,7 +93,8 @@ public class EpisodeView extends View
                 int year = Integer.parseInt(prompt.askForInput("Ano do lançamento: "));
                 int durationTime = Integer.parseInt(prompt.askForInput("Tempo de duração (em minutos): "));
                 Episode episode = new Episode(name, season, LocalDate.of(year, month, day), durationTime, showID); 
-                eFile.create(episode);
+                int id = eFile.create(episode);
+                pList.add(name, id);
                 System.out.println("Operação feita com sucesso!");
                 break;
             }
@@ -136,33 +138,34 @@ public class EpisodeView extends View
                 break;
             }
             // Testar lista invertida
-            case 3: { // Buscar (lista invertida)
+            case 3: { 
                 String search = prompt.askForInput("Nome: ");
-                ListaInvertida[] episodes = pList.read(search);
-                
-                if (actors == null || episodes.length == 0) {
-                    System.out.println("Nenhum episodio encontrado.");
+
+                int[] ids = pList.search(search);
+
+                if (ids.length == 0) {
+                    System.out.println("Nenhum episódio encontrado");
                     break;
                 }
 
-                if (episodes.length == 1) {
-                    System.out.println(episodes[0]);
-                    break;
-                }
+                Episode[] episodes = new Episode[ids.length];
 
-                for (int i = 0; i < episodes.length; i++)
-                    System.out.println((i + 1) + ") " + episodes[i].getName());
+                for (int i = 0; i < ids.length; i++) {
+                    episodes[i] = eFile.read(ids[i]);
+                    System.out.println((i + 1) + " - " + episodes[i].getName());
+                }
 
                 int n = 0;
                 boolean valid = false;
 
                 while (!valid) {
                     try {
-                        n = Integer.parseInt(prompt.askForInput("Número: "));
-                        if (n < 1 || n > episodes.length)
+                        int select = Integer.parseInt(prompt.askForInput("Número: "));
+                        if (select < 1 || select > episodes.length + 1)
                             throw new Exception();
+
                         valid = true;
-                    } catch (Exception e) {
+                    } catch (Exception ex) {
                         System.out.println("Insira um número válido.");
                     }
                 }
@@ -204,6 +207,7 @@ public class EpisodeView extends View
 
                 Episode episode = episodes[n];
 
+                String oldName = episode.getName();
                 String name = prompt.askForInput("Nome (vazio para não alterar): ");
                 if(!name.isEmpty())
                     episode.setName(name);
@@ -229,6 +233,8 @@ public class EpisodeView extends View
                     episode.setDurationTime(Integer.parseInt(durationTime));
                 
                 eFile.update(episode);
+                pList.delete(oldName, episode.getID());
+                pList.add(name, episode.getID());
                 break;
             }
             case 5:
@@ -269,6 +275,7 @@ public class EpisodeView extends View
                     System.out.println("Não foi possível concluir a operação");
                 else
                     System.out.println("Operação finalizada com sucesso");
+                pList.delete(episodes[n].getName(), id);
                 break;
             }
         }

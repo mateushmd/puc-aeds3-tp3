@@ -4,14 +4,15 @@ import pucflix.entity.Actor;
 import pucflix.entity.Show;
 import pucflix.model.ActorFile;
 import pucflix.model.ShowFile;
+import pucflix.model.PostingsList;
 import pucflix.aeds3.ListaInvertida;
 
 public class ActorView extends View {
     private ActorFile aFile;
     private ShowFile sFile;
-    private ListaInvertida pList;
+    private PostingsList pList;
 
-    public ActorView(Prompt prompt, ActorFile aFile, ShowFile sFile, ListaInvertida pList) throws Exception {
+    public ActorView(Prompt prompt, ActorFile aFile, ShowFile sFile, PostingsList pList) throws Exception {
         super(prompt);
         this.aFile = aFile;
         this.sFile = sFile;
@@ -26,8 +27,8 @@ public class ActorView extends View {
     @Override
     public String getPrompt(int depth) throws Exception {
         return "1) Incluir\n" +
-                "2) Buscar\n" +
-                "3) Buscar(lista invertida)\n" +
+                "2) Ler\n" +
+                "3) Buscar\n" +
                 "4) Alterar\n" +
                 "5) Excluir\n" +
                 "6) Adicionar série\n" +
@@ -41,11 +42,12 @@ public class ActorView extends View {
             case 1: { // Incluir
                 String name = prompt.askForInput("Nome do ator: ");
                 Actor actor = new Actor(name);
-                aFile.create(actor);
+                int id = aFile.create(actor);
+                pList.add(actor.getName(), id);
                 System.out.println("Ator criado com sucesso.");
                 break;
             }
-            case 2: { // Buscar
+            case 2: { // Ler
                 String search = prompt.askForInput("Nome: ");
                 Actor[] actors = aFile.readByName(search);
 
@@ -80,33 +82,35 @@ public class ActorView extends View {
                 break;
             }
             // Testar lista invertida
-            case 3: { // Buscar (lista invertida)
+            case 3: {
                 String search = prompt.askForInput("Nome: ");
-                ListaInvertida[] actors = pList.read(search);
-                
-                if (actors == null || actors.length == 0) {
-                    System.out.println("Nenhum ator encontrado.");
+
+                int[] ids = pList.search(search);
+
+                if (ids.length == 0) {
+                    System.out.println("Nenhum ator encontrado");
                     break;
                 }
 
-                if (actors.length == 1) {
-                    System.out.println(actors[0]);
-                    break;
-                }
+                Actor[] actors = new Actor[ids.length];
 
-                for (int i = 0; i < actors.length; i++)
-                    System.out.println((i + 1) + ") " + actors[i].getName());
+                for (int i = 0; i < ids.length; i++) {
+                    actors[i] = aFile.read(ids[i]);
+                    System.out.println((i + 1) + " - " + actors[i].getName());
+                }
 
                 int n = 0;
                 boolean valid = false;
 
                 while (!valid) {
                     try {
-                        n = Integer.parseInt(prompt.askForInput("Número: "));
-                        if (n < 1 || n > actors.length)
+                        int select = Integer.parseInt(prompt.askForInput("Número: "));
+                        if (select < 1 || select > actors.length + 1)
                             throw new Exception();
+
+                        n = select;
                         valid = true;
-                    } catch (Exception e) {
+                    } catch (Exception ex) {
                         System.out.println("Insira um número válido.");
                     }
                 }
@@ -143,12 +147,15 @@ public class ActorView extends View {
                 }
 
                 Actor actor = actors[n];
+                String oldName = actor.getName();
                 String name = prompt.askForInput("Novo nome (vazio para manter): ");
 
                 if (!name.isEmpty())
                     actor.setName(name);
 
                 aFile.update(actor);
+                pList.delete(oldName, actor.getID());
+                pList.add(name, actor.getID());
                 System.out.println("Ator atualizado com sucesso.");
                 break;
             }
@@ -191,6 +198,8 @@ public class ActorView extends View {
                 } else {
                     System.out.println("Não foi possível remover o ator.");
                 }
+
+                pList.delete(actor.getName(), actor.getID());
 
                 break;
             }

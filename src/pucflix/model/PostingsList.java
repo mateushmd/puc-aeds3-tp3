@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.lang.StringBuilder;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import pucflix.aeds3.ListaInvertida;
 import pucflix.aeds3.ElementoLista;
 
@@ -23,10 +25,19 @@ public class PostingsList extends ListaInvertida {
         }
     }
 
+    private class EntityResult {
+        public int id;
+        public float value;
+
+        public EntityResult(int id) {
+            this.id = id;
+        }
+    }
+
     private static final String ACCENTUATION = "áàãâäéèêëíìîïóòõôöúùûüçÁÀÃÂÄÉÈÊËÍÌÎÏÓÒÕÔÖÚÙÛÜÇ";
     private static final String NO_ACCENTUATION = "aaaaaeeeeiiiiooooouuuucAAAAAEEEEIIIIOOOOOUUUUC";
 
-    String[] stopwords = {
+    private String[] stopwords = {
             "de", "a", "o", "que", "e", "do", "da", "em", "um", "para", "e", "com", "nao", "uma", "os",
             "no", "se", "na", "por", "mais", "as", "dos", "como", "mas", "foi", "ao", "ele", "das", "tem",
             "a", "seu", "sua", "ou", "ser", "quando", "muito", "ha", "nos", "ja", "esta", "eu", "tambem",
@@ -57,8 +68,9 @@ public class PostingsList extends ListaInvertida {
 
     private String normalize(String s) {
         StringBuilder sb = new StringBuilder();
+        char[] chars = s.toCharArray();
 
-        for (char c : s.toCharArray()) {
+        for (char c : chars) {
             int idx = ACCENTUATION.indexOf(c);
             if (idx >= 0)
                 sb.append(Character.toLowerCase(NO_ACCENTUATION.charAt(idx)));
@@ -116,42 +128,110 @@ public class PostingsList extends ListaInvertida {
                             id,
                             (float) terms[i].occurrence / (strs.length - stops)));
         }
-
-        incrementaEntidades();
     }
 
-    public double IDF(String s) {
-        String normalized = normalize(s);
-        String[] strs = normalized.split(" ");
-        StringBuilder sb = new StringBuilder();
+    public boolean delete(String full, int id) throws Exception {
+        String[] strs = normalize(full).split(" ");
 
-        for (String word : strs) {
-            if (!isStopWord(word)) {
-                sb.append(word);
-                sb.append(' ');
+        for (String s : strs) {
+            if (isStopWord(s))
+                continue;
+
+            if (!super.delete(s, id))
+                return false;
+        }
+
+        decrementaEntidades();
+
+        return true;
+    }
+
+    /*
+     * public double IDF(String s) {
+     * String normalized = normalize(s);
+     * String[] strs = normalized.split(" ");
+     * StringBuilder sb = new StringBuilder();
+     * 
+     * for (String word : strs) {
+     * if (!isStopWord(word)) {
+     * sb.append(word);
+     * sb.append(' ');
+     * }
+     * }
+     * 
+     * String result = sb.toString().trim(); // string normalizada
+     * 
+     * ElementoLista[] elist = null;
+     * 
+     * try { // busca por todas as ocorrencias daquela string
+     * elist = read(result);
+     * } catch (Exception e) {
+     * e.printStackTrace();
+     * }
+     * 
+     * double f = 0.0;
+     * 
+     * try {// calcula e retorna o IDF
+     * f = numeroEntidades() / elist.length;
+     * return f;
+     * } catch (Exception e) {
+     * e.printStackTrace();
+     * }
+     * 
+     * return f;
+     * 
+     * }
+     */
+
+    public int[] search(String s) throws Exception {
+        String[] strs = normalize(s).split(" ");
+        ArrayList<EntityResult> entities = new ArrayList<EntityResult>();
+        int entityCount = numeroEntidades();
+
+        for (String str : strs) {
+            if (isStopWord(str))
+                continue;
+
+            ElementoLista[] result = super.read(str);
+
+            float idf = (float) entityCount / result.length;
+
+            for (ElementoLista el : result) {
+                addOrUpdate(entities, el.getId(), idf * el.getFrequencia());
             }
         }
 
-        String result = sb.toString().trim(); // string normalizada
+        Collections.sort(entities, new Comparator<EntityResult>() {
+            @Override
+            public int compare(EntityResult e1, EntityResult e2) {
+                return Float.compare(e2.value, e1.value);
+            }
+        });
 
-        ElementoLista[] elist = null;
-
-        try { // busca por todas as ocorrencias daquela string
-            elist = read(result);
-        } catch (Exception e) {
-            e.printStackTrace();
+        int[] ids = new int[entities.size()];
+        for (int i = 0; i < entities.size(); i++) {
+            ids[i] = entities.get(i).id;
         }
 
-        double f = 0.0;
+        return ids;
+    }
 
-        try {// calcula e retorna o IDF
-            f = numeroEntidades() / elist.length;
-            return f;
-        } catch (Exception e) {
-            e.printStackTrace();
+    private void addOrUpdate(ArrayList<EntityResult> entities, int id, float idfXFreq) {
+        int idx = -1;
+        for (int i = 0; i < entities.size(); i++) {
+            if (entities.get(i).id == id) {
+                idx = i;
+                break;
+            }
         }
 
-        return f;
+        EntityResult entity;
+        if (idx == -1) {
+            entity = new EntityResult(id);
+            entities.add(entity);
+        } else
+            entity = entities.get(idx);
 
+        entity.value += idfXFreq;
     }
 }

@@ -23,9 +23,14 @@ public class Prompt {
 
         scanner = new Scanner(System.in);
         views = new View[] {
-                new ShowView(this, sFile, eFile, aFile),
-                new EpisodeView(this, eFile, sFile),
-                new ActorView(this, aFile, sFile)
+                new ShowView(this, sFile, eFile, aFile,
+                        new PostingsList(4, "./dados/dicionario.listainv.serie.bd",
+                                "./dados/blocos.listainv.serie.bd")),
+                new EpisodeView(this, eFile, sFile,
+                        new PostingsList(4, "./dados/dicionario.listainv.episodio.bd",
+                                "./dados/blocos.listainv.episodio.bd")),
+                new ActorView(this, aFile, sFile,
+                        new PostingsList(4, "./dados/dicionario.listainv.ator.bd", "./dados/blocos.listainv.ator.bd"))
         };
         currentBranch = -1;
     }
@@ -92,7 +97,7 @@ public class Prompt {
     }
 
     private void printHeader() {
-        System.out.println("PUCFlix 2.0");
+        System.out.println("PUCFlix 3.0");
         System.out.println("-----------");
         System.out.print("> Início");
 
